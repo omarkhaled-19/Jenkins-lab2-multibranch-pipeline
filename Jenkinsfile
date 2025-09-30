@@ -7,5 +7,13 @@ pipeline {
       }
     }
   }
+     post {
+        success {
+            slackSend(channel: '#jenkins-builds', color: 'good', message: "✅ Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' succeeded on ${env.NODE_NAME}")
+        }
+        failure {
+            slackSend(channel: '#jenkins-builds', color: 'danger', message: "❌ Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' failed. Check console output: ${env.BUILD_URL}")
+        }
+    }
 }
 
