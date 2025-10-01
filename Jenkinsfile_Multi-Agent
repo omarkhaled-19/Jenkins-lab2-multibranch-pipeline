@@ -1,0 +1,32 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Build on Docker Agent') {
+            agent { label 'docker-agent' }   
+            steps {
+                echo "Building app on Docker agent"
+                sh 'whoami'
+                sh 'hostname'
+
+                // Example: run a build inside docker
+                sh 'docker run --rm -v $PWD:/app -w /app openjdk:17 javac HelloWorld.java'
+                sh 'docker run --rm -v $PWD:/app -w /app openjdk:17 java HelloWorld'
+            }
+        }
+
+        stage('Build on EC2 Agent') {
+            agent { label 'ec2-agent' }
+            steps {
+                echo "Building app on EC2 agent"
+                sh 'whoami'
+                sh 'hostname'
+
+                // Simple local build (no docker, runs directly on EC2)
+                sh 'echo "public class HelloWorld { public static void main(String[] args) { System.out.println(\\"Hello from EC2 agent!\\"); } }" > HelloWorld.java'
+                sh 'javac HelloWorld.java'
+                sh 'java HelloWorld'
+            }
+        }
+    }
+}

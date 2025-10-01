@@ -1,0 +1,45 @@
+- name: Configure Jenkins Agent
+  hosts: jenkins_agents
+  become: true
+
+  vars:
+    jenkins_user: jenkins
+
+  tasks:
+    - name: Initial Update Packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
+
+    - name: Install Required Packages
+      ansible.builtin.dnf:
+        name:
+          - java-21-amazon-corretto-devel
+          - docker
+          - git
+        state: present
+
+    - name: Start Docker and enable it
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+# To seperate from the root user
+    - name: Create Jenkins User
+      ansible.builtin.user:
+        name: "{{ jenkins_user }}"
+        append: true
+        groups: docker
+        shell: /bin/bash
+
+    - name: Allow jenkins user passwordless sudo
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/jenkins
+        content: "jenkins ALL=(ALL) NOPASSWD:ALL\n"
+        mode: '0440'
+    - name: Add ssh-key for Jenkins user to use by Jenkins Master
+      ansible.posix.authorized_key:
+        user: "{{ jenkins_user }}"
+        state: present
+        key: "{{ lookup('file', './controller_id_rsa.pub') }}"
